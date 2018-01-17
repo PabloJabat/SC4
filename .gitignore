@@ -35,3 +35,5 @@ project/plugins/project/
 
 # Data
 pruebas.sc
+src/main/resources/taxi_gps_10000000.txt
+src/main/resources/trial.nt
