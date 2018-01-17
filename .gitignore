@@ -34,8 +34,4 @@ project/plugins/project/
 *.iml
 
 # Data
-src/main/resources/*
-!src/main/resources/trial1.nt
-!src/main/resources/taxi_gps_10000000.txt
-!src/main/resources/log4j.properties
 pruebas.sc
