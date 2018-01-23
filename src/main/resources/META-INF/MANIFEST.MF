@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
-Class-Path: classes
+Class-Path: /target/classes
 Main-Class: TripleReader
 

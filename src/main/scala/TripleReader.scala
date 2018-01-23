@@ -304,16 +304,16 @@ object TripleReader {
   def main(args: Array[String]) {
     parser.parse(args, Config()) match {
       case Some(config) =>
-        run(config.in)
+        run(config.in1, config.in2)
       case None =>
         println(parser.usage)
     }
   }
 
-  def run(input: String): Unit = {
+  def run(osm_data: String, gps_data: String): Unit = {
 
     val spark = SparkSession.builder
-      .appName(s"Triple reader example  $input")
+      .appName(s"Triple reader example")
       .master("local[*]") // spark url
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .getOrCreate()
@@ -327,12 +327,12 @@ object TripleReader {
     println("======================================")
 
     val osmBox = (40.6280, 40.6589, 22.9182, 22.9589)
-    val gpsData = sc.textFile("src/main/resources/taxi_gps_10000000.txt")
+    val gpsData = sc.textFile(gps_data)
       .map(_.split("\\s+"))
       .map(dataTransform)
       .filter(isPointInRegion(_,osmBox))
 
-    val mapData: TripleRDD = NTripleReader.load(spark, JavaURI.create(input))
+    val mapData: TripleRDD = NTripleReader.load(spark, JavaURI.create(osm_data))
 
     val waysTriples = mapData
       .find(ANY,URI("http://www.opengis.net/ont/geosparql#asWKT"),ANY)
@@ -373,16 +373,20 @@ object TripleReader {
     spark.stop
   }
 
-  case class Config(in: String = "")
+  case class Config(in1: String = "", in2: String = "")
 
   val parser = new scopt.OptionParser[Config]("Triple reader example") {
 
     head(" Triple reader example")
 
-    opt[String]('i', "input").required().valueName("<path>").
-      action((x, c) => c.copy(in = x)).
+    opt[String]('m', "map").required().valueName("<path>").
+      action((x, c) => c.copy(in1 = x)).
       text("path to file that contains the data (in N-Triples format)")
-      
+
+    opt[String]('i', "gps").required().valueName("<path>").
+      action((x, c) => c.copy(in2 = x)).
+      text("path to file that contains the data (in N-Triples format)")
+
     help("help").text("prints this usage text")
   }
 }
