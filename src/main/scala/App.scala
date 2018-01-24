@@ -5,8 +5,8 @@ import net.sansa_stack.rdf.spark.io.NTripleReader
 import net.sansa_stack.rdf.spark.model.{JenaSparkRDDOps, TripleRDD}
 import org.apache.spark.sql.SparkSession
 
-import scala.collection.mutable
-import scala.math.{abs, pow, sqrt, acos, min, Pi}
+//import scala.collection.mutable
+import scala.math.{Pi, abs, acos, min, pow, sqrt}
 
 class Point (val x: Double, val y: Double) extends Serializable{
 
@@ -299,7 +299,7 @@ object functions {
   }
 }
 
-object TripleReader {
+object MapMatching {
 
   def main(args: Array[String]) {
     parser.parse(args, Config()) match {
@@ -310,7 +310,10 @@ object TripleReader {
     }
   }
 
-  def run(osm_data: String, gps_data: String): Unit = {
+  def run (osm_data: String, gps_data: String) = {
+
+//    val osm_data = args(0)
+//    val gps_data = args(1)
 
     val spark = SparkSession.builder
       .appName(s"Triple reader example")
@@ -368,24 +371,25 @@ object TripleReader {
       .map{case (p: Point, segments: List[(Point,Point)]) => (mapMatching(p,segments),p)}
 
     matchedData.take(5).foreach{
-      case (mp: Point, op: Point) => println("Map Matched Point: " + mp.toString); println("Original Point: " + op.toString)}
+      case (mp: Point, op: Point) => println("Map Matched Point: " + mp.toString);
+        println("Original Point: " + op.toString)}
 
     spark.stop
   }
 
   case class Config(in1: String = "", in2: String = "")
 
-  val parser = new scopt.OptionParser[Config]("Triple reader example") {
+  val parser = new scopt.OptionParser[Config]("Simple Map Matching") {
 
-    head(" Triple reader example")
+    head("Simple Map Matching")
 
     opt[String]('m', "map").required().valueName("<path>").
       action((x, c) => c.copy(in1 = x)).
-      text("path to file that contains the data (in N-Triples format)")
+      text("path to file that contains the map data (in N-Triples format)")
 
     opt[String]('i', "gps").required().valueName("<path>").
       action((x, c) => c.copy(in2 = x)).
-      text("path to file that contains the data (in N-Triples format)")
+      text("path to file that contains the gps data (in .csv format)")
 
     help("help").text("prints this usage text")
   }

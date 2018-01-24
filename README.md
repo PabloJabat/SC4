@@ -1,17 +1,28 @@
-Maven Template Project for SANSA using Spark
+Map Matching for SANSA using Spark
 =============================
-
-This is a [Maven](https://maven.apache.org/) template to generate a [SANSA](https://github.com/SANSA-Stack) project using [Apache Spark](http://spark.apache.org/).
 
 How to use
 ----------
 
 ```
-git clone https://github.com/SANSA-Stack/SANSA-Template-Maven-Spark.git
-cd SANSA-Template-Maven-Spark
+git clone https://github.com/PabloJabat/SC4.git
+cd SC4
 
 mvn clean package
 ````
 
-The subsequent steps depend on your IDE. Generally, just import this repository as a Maven project and start using SANSA / Spark. Enjoy it! :)
+After that you just to deploy it in a spark cluster:
 
+```
+spark-submit 
+--class MapMatching 
+--master <master URL> 
+target/MapMatching-0.1.jar 
+-m /home/pablo/DE/DataSets/osm_data.nt 
+-i /home/pablo/DE/DataSets/taxi_gps_10000000.txt
+
+````
+As you can see, you need to include the path for the jar and two 
+additional parameters. `-m` allows us to specify the location of 
+the open street map data and after `-i` we have to include the path
+to the gps data. 
