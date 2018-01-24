@@ -25,4 +25,4 @@ target/MapMatching-0.1.jar
 As you can see, you need to include the path for the jar and two 
 additional parameters. `-m` allows us to specify the location of 
 the open street map data and after `-i` we have to include the path
-to the gps data. 
+to the gps data. The gps data must have latitude, longitude information. 
