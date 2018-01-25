@@ -10,7 +10,6 @@ buildNumber.properties
 *.idea
 .cache-main
 .classpath
-
 *.class
 *.log
 
@@ -32,6 +31,3 @@ project/plugins/project/
 .worksheet
 .idea/
 *.iml
-
-# Data
-pruebas.sc
