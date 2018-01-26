@@ -55,14 +55,14 @@ object App {
       .find(ANY,URI("http://www.opengis.net/ont/geosparql#asWKT"),ANY)
 
     val waysData = waysTriples
-      .map(a => a.getObject.toString())
+      .map(a => (a.getSubject.toString(),a.getObject.toString()))
 
     val segmentsData = waysData
-      .flatMap(lineStringToSegmentArray)
-      .filter(isSegmentInRegion(_,osmBox))
+      .flatMapValues(lineStringToSegmentArray)
+      .filter(a => isSegmentInRegion(a._2,osmBox))
 
     val minResolution = segmentsData
-      .map(coordinatesDifference)
+      .map(a => coordinatesDifference(a._2))
       .reduce((a,b) => (List(a._1,b._1).max, List(a._2,b._2).max))
 
     val resolution = (minResolution._1,minResolution._2)
@@ -72,7 +72,7 @@ object App {
       .map(p => (gridBoxOfPoint(osmBox,divisions._1,divisions._2,p),p))
 
     val segmentsDataIndexed = segmentsData
-      .map(s => (gridBoxOfSegment(osmBox,divisions._1, divisions._2, s),s))
+      .map(s => (gridBoxOfSegment(osmBox,divisions._1, divisions._2, s._2),s))
       .flatMap{case (k,v) => for (i <- k) yield (i, v)}
       .groupByKey
       .mapValues(_.toList)
@@ -82,14 +82,17 @@ object App {
       .map(a => a._2)
 
     val matchedData = mergedData
-      .map{case (p: Point, segments: List[Segment]) => (pointToLine(p,segments),p)}
+      .map{case (p: Point, s: List[(String, Segment)]) => (pointToLine(p,s),p)}
+      .map{case ((id, new_p), p) => (id, p, new_p)}
 
     matchedData.take(5).foreach{
-      case (mp: Point, op: Point) =>
-        println("Map Matched Point: " + mp.toString)
-        println("Original Point: " + op.toString)}
+      case (id, p, new_p) =>
+        println("Id of way: " + id.toString)
+        println("Map Matched Point: " + new_p.toString)
+        println("Original Point: " + p.toString)}
 
     spark.stop
+
   }
 
   case class Config(in1: String = "", in2: String = "")
