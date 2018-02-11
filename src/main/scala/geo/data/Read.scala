@@ -6,13 +6,13 @@ object Read {
 
   def dataExtraction(list: List[String]): Point = {
     //We first put the 4th entry as it is the latitude and we want the LatLon array
-    new Point(list(3).toDouble, list(2).toDouble, list(6).toDouble, list(0) + " " + list(1))
+    new Point(list(3).toDouble, list(2).toDouble, list(6).toDouble, list.head + " " + list(1))
 
   }
 
-  def matchedGPSDataExtraction(list: List[String]): (String, String) = {
+  def matchedGPSDataExtraction(list: List[String]): (String, List[String]) = {
 
-    (list(1), list(0))
+    (list(1), list.head.split("-").toList)
 
   }
 

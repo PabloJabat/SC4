@@ -83,11 +83,11 @@ object App {
 
     val matchedData = mergedData
       .map{case (p: Point, s: List[(String, Segment)]) => (pointToLine(p,s),p)}
-      .map{case ((id, new_p), p) => (id, p, new_p)}
+      .map{case ((waysId, new_p), p) => (waysId, p, new_p)}
 
 
-    matchedData.map{case (wayId, p, new_p) => (wayId, p.id, p.x, p.y, new_p.x, new_p.y)}
-      .toDF("wayID","pointID","latitude","longitude","matched latitude","matched longitude")
+    matchedData.map{case (waysId, p, new_p) => (waysId.mkString("-"), p.id, p.x, p.y, new_p.x, new_p.y)}
+      .toDF("waysID","pointID","latitude","longitude","matched latitude","matched longitude")
       .coalesce(1).write.csv("C:/Users/Pablo/Desktop/results")
 
 //    matchedData.take(5).foreach{
