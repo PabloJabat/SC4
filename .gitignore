@@ -31,3 +31,4 @@ project/plugins/project/
 .worksheet
 .idea/
 *.iml
+*.sc

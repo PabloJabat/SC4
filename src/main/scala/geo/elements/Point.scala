@@ -1,10 +1,11 @@
 package geo.elements
 
-import geo.math.algebra.{area, height, outOfSegment}
+import geo.math.algebra.{area, outOfSegment}
+import org.scalacheck.Prop.True
 
-import scala.math.{min, pow, sqrt}
+import scala.math._
 
-class Point (val x: Double, val y: Double) extends Serializable{
+class Point (val x: Double, val y: Double,val dir: Double, val id: String) extends Serializable{
 
   //The x is the Latitude and y is the Longitude
   override def toString: String = "Point(" + x + "," + y + ")"
@@ -28,12 +29,6 @@ class Point (val x: Double, val y: Double) extends Serializable{
 
   }
 
-  def - (p: Point): (Double,Double) ={
-
-    (x - p.x, y - p.y)
-
-  }
-
   def projectToSegment (s: Segment): Point = {
 
     if (outOfSegment(this, s))
@@ -47,6 +42,44 @@ class Point (val x: Double, val y: Double) extends Serializable{
       val incrLon = smallHyp * diffLon / bigHyp
       new Point(x + incrLat, y + incrLon)
     }
+
+  }
+
+  def isPointAligned (s: Segment): Boolean = {
+
+    val difference = abs(s.dir-dir)
+
+    if (difference<=10) true
+    else if (difference>=170 && difference <=190)
+      true
+    else if (difference>=350)
+      true
+    else
+      false
+
+  }
+
+  def - (p: Point): (Double,Double) = {
+
+    (x - p.x, y - p.y)
+
+  }
+
+  def == (p: Point): Boolean = {
+
+    (x == p.x) && (y == p.y)
+
+  }
+
+  def this(x: Double, y:Double) = {
+
+    this(x,y,-1,"")
+
+  }
+
+  def this(x: Double, y:Double, dir: Double) = {
+
+    this(x,y,dir,"")
 
   }
 

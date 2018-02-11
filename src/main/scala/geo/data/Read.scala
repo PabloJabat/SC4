@@ -4,9 +4,23 @@ import geo.elements.Point
 
 object Read {
 
-  def dataExtraction(list: Array[String]): Point = {
+  def dataExtraction(list: List[String]): Point = {
     //We first put the 4th entry as it is the latitude and we want the LatLon array
-    new Point(list(4).toDouble, list(3).toDouble)
+    new Point(list(3).toDouble, list(2).toDouble, list(6).toDouble, list(0) + " " + list(1))
+
+  }
+
+  def matchedGPSDataExtraction(list: List[String]): (String, String) = {
+
+    (list(1), list(0))
+
+  }
+
+  def referenceGPSDataExtraction(list: List[String]): (String, String) = {
+
+    val pattern = "([^{}]+)".r
+    (list(1) + " " + list(2), pattern.findFirstIn(list(9)).get)
+
   }
 
 }

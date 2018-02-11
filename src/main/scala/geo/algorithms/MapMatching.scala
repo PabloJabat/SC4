@@ -6,10 +6,18 @@ object MapMatching {
 
   def pointToLine (p: Point, ss: List[(String,Segment)]): (String, Point) = {
 
-    val bestCandidate = ss
-      .map{case (id, s) => (id, p.distToSegment(s), s)}
-      .reduce{case ((a_id ,a_d, a_s), (b_id ,b_d, b_s)) => if (a_d < b_d) (a_id ,a_d, a_s) else (b_id ,b_d, b_s)}
+    var ssList: List[(String, Segment)] = List()
 
+    val ssFiltered = ss.filter{case (id,s) => s.isSegmentAligned(p)}
+
+    if (ssFiltered.length < 3) ssList = ss else ssList = ssFiltered
+    val bestCandidate = ssList
+      .map{case (id, s) => (id, p.distToSegment(s), s, p.isPointAligned(s))}
+      .reduce((a, b) =>
+        if (a._2 < b._2)  a else b)
+
+    val bestCandidates = ssList.groupBy{case (id, s) => p.distToSegment(s)}.toList.min
+    bestCandidates
     (bestCandidate._1, p.projectToSegment(bestCandidate._3))
 
   }

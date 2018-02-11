@@ -2,7 +2,7 @@ package geo.math
 
 import geo.elements.{Point, Segment}
 
-import scala.math.{abs,pow,acos,Pi}
+import scala.math._
 
 object algebra {
 
@@ -26,4 +26,19 @@ object algebra {
     if (beta > Pi/2 || gamma > Pi/2) true else false
   }
 
+  def haversineFormula (a: Point, b: Point): Double = {
+
+    val R = 6371e3
+
+    val sigma1 = a.x.toRadians
+    val sigma2 = b.x.toRadians
+    val sigmaDelta = (b.x-a.x).toRadians
+    val lambdaDelta = (b.y-a.y).toRadians
+
+    val A = sin(sigmaDelta/2)*sin(sigmaDelta/2) + cos(sigma1)*cos(sigma2)*sin(lambdaDelta/2)*sin(lambdaDelta/2)
+    val C = 2*atan2(sqrt(A), sqrt(1-A))
+
+    R * C
+
+  }
 }

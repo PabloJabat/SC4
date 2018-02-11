@@ -3,17 +3,12 @@ package geo.algorithms
 import java.net.{URI => JavaURI}
 
 import net.sansa_stack.rdf.spark.io.NTripleReader
-
 import net.sansa_stack.rdf.spark.model.{JenaSparkRDDOps, TripleRDD}
-
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql._
 
 import geo.elements._
-
 import geo.data.Transform._
-
 import geo.data.Read._
-
 import geo.algorithms.MapMatching._
 
 object App {
@@ -30,7 +25,7 @@ object App {
   def run (osm_data: String, gps_data: String): Unit = {
 
     val spark = SparkSession.builder
-      .appName(s"Triple reader example")
+      .appName(s"Simple Map Matching")
       .master("local[*]") // spark url
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .getOrCreate()
@@ -39,13 +34,18 @@ object App {
     val ops = JenaSparkRDDOps(sc)
     import ops._
 
+    //We need it if we want to transform tuple RDD to DF
+    import spark.implicits._
+
     println("======================================")
     println("|         Simple Map Matching        |")
     println("======================================")
 
+    val pattern = """([^";]+)""".r
+
     val osmBox = (40.6280, 40.6589, 22.9182, 22.9589)
     val gpsData = sc.textFile(gps_data)
-      .map(_.split("\\s+"))
+      .map(a => pattern.findAllIn(a).toList)
       .map(dataExtraction)
       .filter(isPointInRegion(_,osmBox))
 
@@ -55,7 +55,7 @@ object App {
       .find(ANY,URI("http://www.opengis.net/ont/geosparql#asWKT"),ANY)
 
     val waysData = waysTriples
-      .map(a => (a.getSubject.toString(),a.getObject.toString()))
+      .map(a => (findWayID(a.getSubject.toString),a.getObject.toString))
 
     val segmentsData = waysData
       .flatMapValues(lineStringToSegmentArray)
@@ -85,11 +85,16 @@ object App {
       .map{case (p: Point, s: List[(String, Segment)]) => (pointToLine(p,s),p)}
       .map{case ((id, new_p), p) => (id, p, new_p)}
 
-    matchedData.take(5).foreach{
-      case (id, p, new_p) =>
-        println("Id of way: " + id.toString)
-        println("Map Matched Point: " + new_p.toString)
-        println("Original Point: " + p.toString)}
+
+    matchedData.map{case (wayId, p, new_p) => (wayId, p.id, p.x, p.y, new_p.x, new_p.y)}
+      .toDF("wayID","pointID","latitude","longitude","matched latitude","matched longitude")
+      .coalesce(1).write.csv("C:/Users/Pablo/Desktop/results")
+
+//    matchedData.take(5).foreach{
+//      case (id, p, new_p) =>
+//        println("Id of way: " + id.toString)
+//        println("Map Matched Point: " + new_p.toString)
+//        println("Original Point: " + p.toString)}
 
     spark.stop
 
