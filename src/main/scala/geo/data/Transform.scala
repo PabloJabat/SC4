@@ -86,10 +86,10 @@ object Transform {
     val maxLon = box._4
 
     //Remember that the Point.x is the Latitude and Point.y is the Longitude
-    val minLatWay = way.map(p => p.x).min
-    val maxLatWay = way.map(p => p.x).max
-    val minLonWay = way.map(p => p.y).min
-    val maxLonWay = way.map(p => p.y).max
+    val minLatWay = way.map(p => p.lat).min
+    val maxLatWay = way.map(p => p.lat).max
+    val minLonWay = way.map(p => p.lon).min
+    val maxLonWay = way.map(p => p.lon).max
 
     //We now create a box similar to the Grid Box so that me can use it to compare it with each way's Box
     val wayBox = Array(new Point(minLatWay, minLonWay),
@@ -100,8 +100,8 @@ object Transform {
     //Here we compare the way's Grid Box and with the one passed to the function
     //We return a true if they overlap, otherwise, we return a false
     for {point <- wayBox
-         testLat = (minLat <= point.x) && (maxLat >= point.x)
-         testLon = (minLon <= point.y) && (maxLon >= point.y)} {
+         testLat = (minLat <= point.lat) && (maxLat >= point.lat)
+         testLon = (minLon <= point.lon) && (maxLon >= point.lon)} {
 
       if (testLat && testLon) {
 
@@ -141,8 +141,8 @@ object Transform {
     var b = ""
 
     //Tests
-    val latTest = (i: Int) => (point.x >= ((i - 1) * latDiv + minOmsLat)) && (point.x <= (i * latDiv + minOmsLat))
-    val lonTest = (j: Int) => (point.y >= ((j - 1) * lonDiv + minOmsLon)) && (point.y <= (j * lonDiv + minOmsLon))
+    val latTest = (i: Int) => (point.lat >= ((i - 1) * latDiv + minOmsLat)) && (point.lat <= (i * latDiv + minOmsLat))
+    val lonTest = (j: Int) => (point.lon >= ((j - 1) * lonDiv + minOmsLon)) && (point.lon <= (j * lonDiv + minOmsLon))
 
     for (i <- 1 to n if latTest(i)) a = i.toString
     for (j <- 1 to n if lonTest(j)) b = j.toString
@@ -159,10 +159,10 @@ object Transform {
 
   def gridBoxOfSegment (osmBox: (Double, Double, Double, Double), n: Int, m: Int, s: Segment): Array[String] = {
 
-    val minLatSegment = List(s.a.x,s.b.x).min
-    val maxLatSegment = List(s.a.x,s.b.x).max
-    val minLonSegment = List(s.a.y,s.b.y).min
-    val maxLonSegment = List(s.a.y,s.b.y).max
+    val minLatSegment = List(s.a.lat,s.b.lat).min
+    val maxLatSegment = List(s.a.lat,s.b.lat).max
+    val minLonSegment = List(s.a.lon,s.b.lon).min
+    val maxLonSegment = List(s.a.lon,s.b.lon).max
 
     //We now create a box consisting of 4 points similar to the Grid Box so that me can use it to compare it with each segments's Box
     val segmentBox = Array(new Point(minLatSegment, minLonSegment),
@@ -176,10 +176,10 @@ object Transform {
   def gridBoxOfWay (osmBox: (Double, Double, Double, Double), n: Int, m: Int, way: Array[Point]): Array[String] = {
 
     //Remember that the Point.x is the Latitude and Point.y is the Longitude
-    val minLatWay = way.map(p => p.x).min
-    val maxLatWay = way.map(p => p.x).max
-    val minLonWay = way.map(p => p.y).min
-    val maxLonWay = way.map(p => p.y).max
+    val minLatWay = way.map(p => p.lat).min
+    val maxLatWay = way.map(p => p.lat).max
+    val minLonWay = way.map(p => p.lon).min
+    val maxLonWay = way.map(p => p.lon).max
 
     //We now create a box consisting of 4 points similar to the Grid Box so that me can use it to compare it with each way's Box
     val wayBox = Array(new Point(minLatWay, minLonWay),
@@ -192,8 +192,8 @@ object Transform {
 
   def coordinatesDifference (s: Segment): (Double, Double) = {
 
-    val latDifference = abs(s.a.x - s.b.x)
-    val lonDifference = abs(s.a.y - s.b.y)
+    val latDifference = abs(s.a.lat - s.b.lat)
+    val lonDifference = abs(s.a.lon - s.b.lon)
     (latDifference, lonDifference)
 
   }
@@ -207,7 +207,7 @@ object Transform {
     val minOmsLon = osmBox._3
     val maxOmsLon = osmBox._4
 
-    val test = (gpsPoint.x > minOmsLat && gpsPoint.x < maxOmsLat) && (gpsPoint.y > minOmsLon && gpsPoint.y < maxOmsLon)
+    val test = (gpsPoint.lat > minOmsLat && gpsPoint.lat < maxOmsLat) && (gpsPoint.lon > minOmsLon && gpsPoint.lon < maxOmsLon)
     test
   }
 

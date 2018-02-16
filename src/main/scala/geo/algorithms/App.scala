@@ -20,6 +20,7 @@ object App {
       case None =>
         println(parser.usage)
     }
+
   }
 
   def run (osm_data: String, gps_data: String): Unit = {
@@ -82,13 +83,13 @@ object App {
       .map(a => a._2)
 
     val matchedData = mergedData
-      .map{case (p: Point, s: List[(String, Segment)]) => (pointToLine(p,s),p)}
-      .map{case ((waysId, new_p), p) => (waysId, p, new_p)}
+      .map{case (p: Point, s: List[(String, Segment)]) => (naiveBayesClassifierMM(p,s),p)}
+      .map{case ((wayId, new_p), p) => (wayId, p, new_p)}
 
 
-    matchedData.map{case (waysId, p, new_p) => (waysId.mkString("-"), p.id, p.x, p.y, new_p.x, new_p.y)}
+    matchedData.map{case (wayId, p, new_p) => (wayId, p.id, p.lat, p.lon, new_p.lat, new_p.lon)}
       .toDF("waysID","pointID","latitude","longitude","matched latitude","matched longitude")
-      .coalesce(1).write.csv("C:/Users/Pablo/Desktop/results")
+      .coalesce(1).write.csv("/home/pablo/results")
 
 //    matchedData.take(5).foreach{
 //      case (id, p, new_p) =>

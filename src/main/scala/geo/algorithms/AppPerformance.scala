@@ -6,11 +6,13 @@ import geo.data.Read._
 object AppPerformance {
 
   def main(args: Array[String]) {
+
     parser.parse(args, Config()) match {
       case Some(config) =>
         run(config.in1, config.in2)
       case None =>
         println(parser.usage)
+
     }
 
     def run (gps_matched_data: String, gps_data: String): Unit = {
@@ -67,6 +69,7 @@ object AppPerformance {
       text("path to file that contains the gps matched data (in .csv format)")
 
     help("help").text("prints this usage text")
+
   }
 
 }
