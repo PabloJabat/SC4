@@ -1,22 +1,39 @@
 package geo.algorithms
 
 import geo.elements.{Point, Segment}
+import geo.math.algebra.naiveBayesClassifier
 
 object MapMatching {
 
-  def pointToLine (p: Point, ss: List[(String,Segment)]): (List[String], Point) = {
+  def geometricMM (p: Point, segmentsLst: List[(String,Segment)], t: Double = 30.0): (String, Point) = {
 
-    var ssList: List[(String, Segment)] = List()
-    val ssFiltered = ss.filter{case (_,s) => s.isSegmentAligned(p)}
+    val segmentsAligned = segmentsLst.filter{case (_,s) => s.isSegmentAligned(p,t)}
 
-    if (ssFiltered.lengthCompare(3) < 0) ssList = ss else ssList = ssFiltered
+    val bestCandidate = try {
 
-    val bestCandidates = ssList
-      .groupBy{case (_, s) => p.distToSegment(s)}
-      .toList
-      .minBy{case (dist, _) => dist}
+      segmentsAligned
+        .minBy{case (_, s) => p.distToSegment(s)}
 
-    (bestCandidates._2.map(a => a._1), p.projectToSegment(bestCandidates._2.head._2))
+    } catch {
+
+      case _: UnsupportedOperationException =>
+
+        segmentsLst
+          .minBy{case (_, s) => p.distToSegment(s)}
+
+    }
+
+    (bestCandidate._1, p.projectToSegment(bestCandidate._2))
+
+  }
+
+  def naiveBayesClassifierMM (p: Point, segmentsLst: List[(String,Segment)]): (String, Point) = {
+
+
+    val bestCandidate = segmentsLst
+      .minBy{case (_, s) => naiveBayesClassifier(p,s)}
+
+    (bestCandidate._1, p.projectToSegment(bestCandidate._2))
 
   }
 

@@ -1,6 +1,7 @@
 package geo.data
 
 import geo.elements.Point
+import geo.data.Transform.stringToPoint
 
 object Read {
 
@@ -20,6 +21,18 @@ object Read {
 
     val pattern = "([^{}]+)".r
     (list(1) + " " + list(2), pattern.findFirstIn(list(9)).get)
+
+  }
+
+  def matchedGPSDataExtractionStats(list: List[String]): (Point, String, Double, Point) = {
+
+    val pattern1 = "[0-9]+".r
+    val pattern2 = "[0-9]+.[0-9]+".r
+
+    (new Point(list(4).toDouble,list(3).toDouble, list(7).toDouble),
+      pattern1.findFirstIn(list(9)).get,
+      pattern2.findFirstIn(list(9)).get.toDouble,
+      stringToPoint(list(11)))
 
   }
 
