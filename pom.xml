@@ -108,6 +108,12 @@
 			<artifactId>scala-logging-slf4j_${scala.binary.version}</artifactId>
 			<version>2.1.2</version>
 		</dependency>
+		<!--Lift-JSON-->
+        <dependency>
+            <groupId>net.liftweb</groupId>
+            <artifactId>lift-json_2.10</artifactId>
+            <version>2.5</version>
+        </dependency>
 
 
 	</dependencies>

@@ -22,6 +22,13 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
 
   override def toString: String = "Point(" + lat + "," + lon + ")"
 
+  def toList: List[Double] = {
+
+    //we invert the order of lat, lon because is the format supported by geojson
+
+    List(lon, lat)
+  }
+
   def toGeoVector: GeoVector = {
 
     val x = cos(lat.toRadians)*cos(lon.toRadians)

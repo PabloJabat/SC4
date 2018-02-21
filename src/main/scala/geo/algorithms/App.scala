@@ -2,6 +2,7 @@ package geo.algorithms
 
 import java.net.{URI => JavaURI}
 
+import java.io._
 import net.sansa_stack.rdf.spark.io.NTripleReader
 import net.sansa_stack.rdf.spark.model.{JenaSparkRDDOps, TripleRDD}
 import org.apache.spark.sql._
@@ -9,6 +10,7 @@ import org.apache.spark.sql._
 import geo.elements._
 import geo.data.Transform._
 import geo.data.Read._
+import geo.data.Write.writeToJSON
 import geo.algorithms.MapMatching._
 
 object App {
@@ -29,6 +31,7 @@ object App {
       .appName(s"Simple Map Matching")
       .master("local[*]") // spark url
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+//      .config("spark.jars", jars)
       .getOrCreate()
 
     val sc = spark.sparkContext
@@ -83,21 +86,28 @@ object App {
       .map(a => a._2)
 
     val matchedData = mergedData
-      .map{case (p: Point, s: List[(String, Segment)]) => (naiveBayesClassifierMM(p,s),p)}
-      .map{case ((wayId, new_p), p) => (wayId, p, new_p)}
+      .map{case (p: Point, s: List[(String, Segment)]) => (naiveBayesClassifierMM(p,s),p,s)}
+      .map{case ((way, new_p), p,s) => (way, p, new_p,s)}
 
+//
+//    matchedData.map{case (wayId, p, new_p) => (wayId, p.id, p.lat, p.lon, new_p.lat, new_p.lon)}
+//      .toDF("waysID","pointID","latitude","longitude","matched latitude","matched longitude")
+//      .coalesce(1).write.csv("/home/pablo/results")
 
-    matchedData.map{case (wayId, p, new_p) => (wayId, p.id, p.lat, p.lon, new_p.lat, new_p.lon)}
-      .toDF("waysID","pointID","latitude","longitude","matched latitude","matched longitude")
-      .coalesce(1).write.csv("/home/pablo/results")
+    val someResults =  matchedData.take(5)
 
-//    matchedData.take(5).foreach{
-//      case (id, p, new_p) =>
-//        println("Id of way: " + id.toString)
-//        println("Map Matched Point: " + new_p.toString)
-//        println("Original Point: " + p.toString)}
+    val pw = new PrintWriter("/home/pablo/geojsonResults.json")
 
-    spark.stop
+    pw.println("{\"type\": \"FeatureCollection\" ,\"features\":[")
+    someResults.zipWithIndex.foreach{case (r,i) => writeToJSON(r,pw); if (i!= someResults.length -1) pw.println(",")}
+    pw.println("]}")
+    pw.close()
+
+    someResults.foreach{
+      case (id, p, new_p, _) =>
+        println("Id of way: " + id.toString)
+        println("Map Matched Point: " + new_p.toString)
+        println("Original Point: " + p.toString)}
 
   }
 

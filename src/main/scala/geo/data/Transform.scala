@@ -1,10 +1,25 @@
 package geo.data
 
-import geo.elements.{Point, Segment}
+import geo.elements.{Point, Segment, Way}
 
+import scala.collection.mutable.ListBuffer
 import scala.math.abs
 
 object Transform {
+
+  def toWay (lstSegments: List[Segment]): Way = {
+
+    val pointsList = ListBuffer(lstSegments.head.a)
+
+    for (i <- lstSegments.indices) {
+
+      pointsList += lstSegments(i).b
+
+    }
+
+    new Way(pointsList.toList)
+
+  }
 
   def stringToPoint(data: String): Point = {
 

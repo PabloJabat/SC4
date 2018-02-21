@@ -5,7 +5,7 @@ import geo.math.algebra.naiveBayesClassifier
 
 object MapMatching {
 
-  def geometricMM (p: Point, segmentsLst: List[(String,Segment)], t: Double = 30.0): (String, Point) = {
+  def geometricMM (p: Point, segmentsLst: List[(String,Segment)], t: Double = 30.0): ((String,Segment), Point) = {
 
     val segmentsAligned = segmentsLst.filter{case (_,s) => s.isSegmentAligned(p,t)}
 
@@ -23,17 +23,17 @@ object MapMatching {
 
     }
 
-    (bestCandidate._1, p.projectToSegment(bestCandidate._2))
+    (bestCandidate, p.projectToSegment(bestCandidate._2))
 
   }
 
-  def naiveBayesClassifierMM (p: Point, segmentsLst: List[(String,Segment)]): (String, Point) = {
+  def naiveBayesClassifierMM (p: Point, segmentsLst: List[(String,Segment)]): ((String,Segment), Point) = {
 
 
     val bestCandidate = segmentsLst
       .minBy{case (_, s) => naiveBayesClassifier(p,s)}
 
-    (bestCandidate._1, p.projectToSegment(bestCandidate._2))
+    (bestCandidate, p.projectToSegment(bestCandidate._2))
 
   }
 
