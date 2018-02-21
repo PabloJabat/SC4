@@ -27,7 +27,7 @@ object algebra {
     val b = p.distToSegment(s)
     val deltaPhi = p.orientationDifference(s)
 
-    pow(b,2)/stdev_b + pow(deltaPhi,2)/stdev_deltaPhi
+    pow(b,2)/pow(stdev_b,2) + pow(deltaPhi,2)/pow(stdev_deltaPhi,2)
 
   }
 
