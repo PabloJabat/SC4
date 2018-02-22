@@ -1,8 +1,5 @@
 package geo.elements
 
-import net.liftweb.json.DefaultFormats
-
-import net.liftweb.json.Serialization.write
 
 class Way (val points: List[Point]) extends Serializable{
 
@@ -23,18 +20,6 @@ class Way (val points: List[Point]) extends Serializable{
       .map(s => p.projectToSegment(s))
       .map(a => a.distToPoint(p))
       .min
-
-  }
-
-  def toJSON: String = {
-
-    implicit val formats = DefaultFormats
-
-    case class Empty()
-    case class Geometry(geometry: Any,`type`: String = "Feature", properties: Any = Empty())
-    case class WayGeoJSON(coordinates: List[List[Double]],`type`: String = "LineString")
-
-    write(Geometry(WayGeoJSON(toListList)))
 
   }
 

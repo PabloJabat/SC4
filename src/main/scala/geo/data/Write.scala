@@ -7,50 +7,61 @@ import net.liftweb.json.Serialization.write
 
 object Write {
 
-  def writeToJSON (data: ((String, Segment),Point, Point, List[(String,Segment)]), pw: PrintWriter): Unit = {
+  case class Empty()
+  case class Geometry(geometry: Any,`type`: String = "Feature", properties: Any = Empty())
+  case class PointGeoJSON(coordinates: List[Double],`type`: String = "Point")
+  case class WayGeoJSON(coordinates: List[List[Double]],`type`: String = "LineString")
 
-    implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats = DefaultFormats
 
-    case class Empty()
-    //case class Features (`type`:String = "FeatureCollection", features: List[Geometry])
-    case class Geometry(geometry: Any,`type`: String = "Feature", properties: Any = Empty())
-    case class PointGeoJSON(coordinates: List[Double],`type`: String = "Point")
-    case class WayGeoJSON(coordinates: List[List[Double]],`type`: String = "LineString")
+  def resultsToJSON (pw: PrintWriter, data: List[(Point, Point, List[Way])]): Unit = {
 
-    val seg = Geometry(
-      WayGeoJSON(
-        List(data._1._2.a.toList, data._1._2.b.toList)
-      )
-    )
+    pw.write("{\"type\": \"FeatureCollection\" ,\"features\":[")
 
-    val originalPoint = Geometry(
-      PointGeoJSON(
-        data._2.toList
-      )
-    )
+    writeFeatures(pw, data)
 
-    val matchedPoint = Geometry(
-      PointGeoJSON(
-        data._3.toList
-      )
-    )
+    pw.write("]}")
 
-    val lstGeometry = List(seg, originalPoint, matchedPoint)
-    val lstWays = data._4.map{case (_, s) => List(s.a.toList, s.b.toList)}.map(a => Geometry(WayGeoJSON(a)))
-    val lstElements = lstGeometry ++ lstWays
+  }
 
-    lstElements
-      .zipWithIndex
-      .foreach {
-        case (a, i) =>
-          pw.println(write(a))
-          if (i != lstElements.length - 1) pw.println(",")
+  def writeFeatures (pw: PrintWriter, data: List[(Point, Point, List[Way])]): Unit = {
+
+    data
+      .init
+      .foreach{
+        case (p, p_m, lstWays) =>
+          writeScenario(pw, p, p_m, lstWays)
       }
 
-    //val jsonString = write(lstGeometry)
-    //val jsonString = write(Features(features = lstGeometry))
+    writeScenario(pw, data.last._1, data.last._2, data.last._3)
 
-    //pw.println(jsonString)
+  }
+
+  def writeScenario (pw: PrintWriter, p: Point, p_m: Point, lstWays: List[Way]): Unit = {
+
+    lstWays
+      .map(w => wayToJSON(w))
+      .foreach {
+        a =>
+          pw.write(a)
+          pw.print(",")
+      }
+
+    pw.write(pointToJSON(p))
+    pw.print(",")
+    pw.write(pointToJSON(p_m))
+
+  }
+
+  def pointToJSON(p: Point): String = {
+
+    write(Geometry(PointGeoJSON(p.toList)))
+
+  }
+
+  def wayToJSON(w: Way): String = {
+
+    write(Geometry(WayGeoJSON(w.toListList)))
 
   }
 
