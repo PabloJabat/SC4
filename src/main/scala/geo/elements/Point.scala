@@ -4,6 +4,10 @@ import geo.math.algebra._
 
 import scala.math._
 
+import net.liftweb.json.DefaultFormats
+
+import net.liftweb.json.Serialization.write
+
 class Point (val lat: Double, val lon: Double, val orientation: Double, val id: String) extends Serializable{
 
   //if the point has no direction then it is assigned a -1
@@ -21,6 +25,19 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
   }
 
   override def toString: String = "Point(" + lat + "," + lon + ")"
+
+  def toJSON: String = {
+
+    implicit val formats = DefaultFormats
+
+    case class Empty()
+    case class Geometry(geometry: Any,`type`: String = "Feature", properties: Any = Empty())
+    case class PointGeoJSON(coordinates: List[Double],`type`: String = "Point")
+
+    write(Geometry(PointGeoJSON(toList)))
+
+
+  }
 
   def toList: List[Double] = {
 

@@ -36,13 +36,15 @@ object Write {
     )
 
     val lstGeometry = List(seg, originalPoint, matchedPoint)
+    val lstWays = data._4.map{case (_, s) => List(s.a.toList, s.b.toList)}.map(a => Geometry(WayGeoJSON(a)))
+    val lstElements = lstGeometry ++ lstWays
 
-    lstGeometry
+    lstElements
       .zipWithIndex
       .foreach {
         case (a, i) =>
           pw.println(write(a))
-          if (i != 2) pw.println(",")
+          if (i != lstElements.length - 1) pw.println(",")
       }
 
     //val jsonString = write(lstGeometry)
