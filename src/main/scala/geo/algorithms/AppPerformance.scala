@@ -42,13 +42,23 @@ object AppPerformance {
 
       val joinedDataCount = joinedData.count()
 
+      joinedData.persist()
+
       val correctMatches = joinedData
-        .filter{case (_, waysID) => waysID._2.contains(waysID._1)}
+        .filter{case (_, waysID) => waysID._2 contains waysID._1}
         .distinct().count()
 
       val performance = (correctMatches*10000/joinedDataCount).toDouble/100
 
       println("% Performance: " + performance)
+
+      val incorrectMatches = joinedData
+        .filter{case (_, waysID) => !(waysID._2 contains waysID._1)}
+
+      incorrectMatches
+        .take(10)
+        .map(a => a._1)
+        .foreach(println)
 
     }
 
