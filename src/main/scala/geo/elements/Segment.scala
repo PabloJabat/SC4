@@ -2,11 +2,17 @@ package geo.elements
 
 import scala.math._
 
-class Segment (val a: Point, val b: Point) extends Serializable{
+class Segment (val a: Point, val b: Point, val osmID: String) extends Serializable{
 
   // a has to be the starting point of the segment and b the ending point
   // dir is the angle towards the vertex b. 0 degrees is North, 90 degrees is East, etc.
   // dir is a variable with the forward azimuth
+
+  def this(a: Point,b: Point) = {
+
+    this(a,b,"")
+
+  }
 
   def isSegmentAligned (p: Point, t: Double): Boolean = {
 

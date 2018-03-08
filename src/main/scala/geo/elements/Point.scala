@@ -7,20 +7,40 @@ import scala.math._
 class Point (val lat: Double, val lon: Double, val orientation: Double, val id: String) extends Serializable{
 
   //if the point has no direction then it is assigned a -1
-  def this(x: Double, y:Double) = {
+  def this(lat: Double, lon: Double) = {
 
-    this(x,y,-1,"")
+    this(lat,lon,-1,"")
 
   }
 
   //if the point doesn't need an id, then, this variable takes the value or ''
-  def this(x: Double, y:Double, dir: Double) = {
+  def this(lat: Double, lon: Double, dir: Double) = {
 
-    this(x,y,dir,"")
+    this(lat,lon,dir,"")
 
   }
 
+  //Type transformation methods
   override def toString: String = "Point(" + lat + "," + lon + ")"
+
+  override def hashCode(): Int = {
+
+    val pattern = "([0-9])".r
+
+    pattern.findFirstIn(id).get.toInt
+
+  }
+
+  override def equals(that: Any): Boolean = {
+
+   that match {
+
+     case that: Point => that == this && that.hashCode() == this.hashCode()
+     case _ => false
+
+   }
+
+  }
 
   def toList: List[Double] = {
 
@@ -39,6 +59,7 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
 
   }
 
+  //Distance and projection methods
   def distToPoint (p: Point): Double = {
 
     haversineFormula(this,p)
@@ -107,6 +128,7 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
 
   }
 
+  //Orientation computations methods
   def isPointAligned (s: Segment, t: Double): Boolean = {
 
 
@@ -124,9 +146,45 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
 
   }
 
+  def computePointDistanceBearing (distance: Double): Point = {
+
+    val R = 6371e3
+    val latitude = asin(sin(lat.toRadians) * cos(distance / R) + cos(lat.toRadians) * sin(distance / R) * cos(orientation.toRadians))
+    val longitude = lon.toRadians + atan2(sin(orientation.toRadians) * sin(distance / R) * cos(lat.toRadians), cos(distance / R) - sin(lat.toRadians) * sin(latitude))
+
+    new Point(latitude.toDegrees, longitude.toDegrees)
+
+  }
+
+  //Indexing methods
+  def isInGridCell(osmBox: (Double, Double, Double, Double), clearance: Double = 0): Boolean = {
+
+    val R = 6371e3
+    val degreeClearance = clearance*360/(2*Pi*R)
+
+    val minOsmLat = osmBox._1
+    val maxOsmLat = osmBox._2
+    val minOsmLon = osmBox._3
+    val maxOsmLon = osmBox._4
+
+    val latTest = lat >= minOsmLat + degreeClearance && lat <= maxOsmLat - degreeClearance
+    val lonTest = lon >= minOsmLon + degreeClearance && lon <= maxOsmLon - degreeClearance
+
+    val test = latTest && lonTest
+    test
+
+  }
+
+  //Point operators
   def == (p: Point): Boolean = {
 
     (lat == p.lat) && (lon == p.lon)
+
+  }
+
+  def - (p:Point): (Double, Double) = {
+
+    (lat - p.lat, lon - p.lon)
 
   }
 

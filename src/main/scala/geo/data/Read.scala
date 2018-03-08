@@ -1,9 +1,71 @@
 package geo.data
 
-import geo.elements.Point
-import geo.data.Transform.stringToPoint
+import geo.elements.{Grid, Point, Way}
+import geo.data.Transform.{findWayID, lineStringToPointArray, stringToPoint}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 
 object Read {
+
+  def loadMap(spark: SparkSession, mapPath: String): RDD[Way] = {
+
+    import java.net.{URI => JavaURI}
+    import net.sansa_stack.rdf.spark.io.NTripleReader
+    import net.sansa_stack.rdf.spark.model.{JenaSparkRDDOps, TripleRDD}
+
+    val sc = spark.sparkContext
+    val ops = JenaSparkRDDOps(sc)
+
+    import ops._
+
+    val mapData: TripleRDD = NTripleReader.load(spark, JavaURI.create(mapPath))
+
+    mapData
+      .find(ANY,URI("http://www.opengis.net/ont/geosparql#asWKT"),ANY)
+      .map(a => (findWayID(a.getSubject.toString),a.getObject.toString))
+      .map{case (id, way) => new Way(lineStringToPointArray(way).toList,id)}
+
+  }
+
+  def loadGPSPoints(spark: SparkSession, gpsDataPath: String): RDD[Point] = {
+
+    val pattern = """([^";]+)""".r
+
+    spark.sparkContext.textFile(gpsDataPath)
+      .map(line => pattern.findAllIn(line).toList)
+      .map(dataExtraction)
+
+  }
+
+  def filterIndexMap(rddWays: RDD[Way], grid: Grid): RDD[(String, List[Way])] = {
+
+    rddWays
+      .filter(w => grid.hasWay(w))
+      .map(w => (grid.indexWay(w),w))
+      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
+      .groupByKey
+      .mapValues(_.toList)
+
+  }
+
+  def filterIndexGPSPoints(rddGPSPoints: RDD[Point], grid: Grid): RDD[(String, Point)] = {
+
+    rddGPSPoints
+      .filter(p => grid.clearanceBoxHasPoint(p))
+      .map(p => (grid.indexPoint(p),p))
+      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
+
+  }
+
+  def joinIndexedMapPoints(rddGPSPoints: RDD[(String, Point)], rddWays: RDD[(String, List[Way])]): RDD[(Point, List[Way])] = {
+
+    rddGPSPoints.join(rddWays)
+      .values
+      .groupByKey
+      .flatMapValues(_.toList)
+     // .mapValues(_.flatten.toList)
+
+  }
 
   def dataExtraction(list: List[String]): Point = {
     //We first put the 4th entry as it is the latitude and we want the LatLon array
@@ -11,9 +73,9 @@ object Read {
 
   }
 
-  def matchedGPSDataExtraction(list: List[String]): (String, List[String]) = {
+  def matchedGPSDataExtraction(list: List[String]): (String, String) = {
 
-    (list(1), list.head.split("-").toList)
+    (list(1), list.head)
 
   }
 

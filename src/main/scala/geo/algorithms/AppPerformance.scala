@@ -2,6 +2,7 @@ package geo.algorithms
 
 import org.apache.spark.sql.SparkSession
 import geo.data.Read._
+import java.io._
 
 object AppPerformance {
 
@@ -45,20 +46,24 @@ object AppPerformance {
       joinedData.persist()
 
       val correctMatches = joinedData
-        .filter{case (_, waysID) => waysID._2 contains waysID._1}
-        .distinct().count()
+        .filter{case (_, waysID) => waysID._2 == waysID._1}
+        .count()
 
       val performance = (correctMatches*10000/joinedDataCount).toDouble/100
 
       println("% Performance: " + performance)
 
       val incorrectMatches = joinedData
-        .filter{case (_, waysID) => !(waysID._2 contains waysID._1)}
+        .filter{case (_, waysID) => !(waysID._2 == waysID._1)}
+
+      val pw = new PrintWriter("/home/pablo/DE/DataSets/incorrectMatches.txt")
 
       incorrectMatches
         .take(10)
         .map(a => a._1)
-        .foreach(println)
+        .foreach(a => pw.println(a))
+
+      pw.close()
 
     }
 

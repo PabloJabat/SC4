@@ -1,6 +1,6 @@
 package geo.algorithms
 
-import geo.data.Transform.{findWayID, isSegmentInRegion, lineStringToSegmentArray}
+import geo.data.Transform.findWayID
 import geo.data.Read.matchedGPSDataExtractionStats
 import org.apache.spark.sql.SparkSession
 import java.net.{URI => JavaURI}
@@ -50,10 +50,6 @@ object AppStatistics {
 
       val waysData = waysTriples
         .map(a => (findWayID(a.getSubject.toString),a.getObject.toString))
-
-      val segmentsData = waysData
-        .flatMapValues(lineStringToSegmentArray)
-        .filter(a => isSegmentInRegion(a._2,osmBox))
 
     }
 

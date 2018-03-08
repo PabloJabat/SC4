@@ -1,10 +1,29 @@
 package geo.math
 
-import geo.elements.{Point, Segment}
+import geo.elements.{Point, Segment, Way}
 
 import scala.math._
 
 object algebra {
+
+  def degreeToMeters(degreeIncr: Double): Double = {
+
+    //We consider the earth a sphere
+
+    val R = 6371e3
+
+    2*Pi*R*degreeIncr/360
+
+  }
+
+  def metersToDegrees(metersIncr: Double): Double = {
+
+    //We consider the earth a sphere
+    val R = 6371e3
+
+    metersIncr*360/(2*Pi*R)
+
+  }
 
   def haversineFormula (a: Point, b: Point): Double = {
 
@@ -22,12 +41,20 @@ object algebra {
 
   }
 
-  def naiveBayesClassifier (p: Point, s: Segment, stdev_b: Double = 5.0, stdev_deltaPhi: Double = 1000000.0): Double = {
+  def naiveBayesClassifier (p: Point, s: Segment, stdev_b: Double, stdev_deltaPhi: Double): Double = {
 
     val b = p.distToSegment(s)
     val deltaPhi = p.orientationDifference(s)
 
     pow(b,2)/pow(stdev_b,2) + pow(deltaPhi,2)/pow(stdev_deltaPhi,2)
+
+  }
+
+  def naiveBayesClassifier (p: Point, w: Way, stdev_b: Double, stdev_deltaPhi: Double): Double = {
+
+    w.toSegmentsList
+      .map(s => naiveBayesClassifier(p,s,stdev_b,stdev_deltaPhi))
+      .min
 
   }
 

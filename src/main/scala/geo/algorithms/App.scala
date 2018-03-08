@@ -10,12 +10,13 @@ import org.apache.spark.sql._
 import geo.elements._
 import geo.data.Transform._
 import geo.data.Read._
-import geo.data.Write.writeToJSON
+import geo.data.Write._
 import geo.algorithms.MapMatching._
 
 object App {
 
   def main(args: Array[String]) {
+
     parser.parse(args, Config()) match {
       case Some(config) =>
         run(config.in1, config.in2)
@@ -47,12 +48,31 @@ object App {
 
     val pattern = """([^";]+)""".r
 
-    val osmBox = (40.6280, 40.6589, 22.9182, 22.9589)
-    val gpsData = sc.textFile(gps_data)
-      .map(a => pattern.findAllIn(a).toList)
-      .map(dataExtraction)
-      .filter(isPointInRegion(_,osmBox))
+    // We first set the region on the map in which we want to perform map matching
+    val osmBox = BoxLimits(40.6486, 40.6374, 22.9478, 22.9298)
+    val myGrid = new Grid(osmBox,500)
 
+    println("Number of latitude divisions: " + myGrid.latDivisions)
+    println("Number of longitude divisions: " + myGrid.lonDivisions)
+
+
+    val gpsData = sc.textFile(gps_data)
+      .map(line => pattern.findAllIn(line).toList)
+      .map(dataExtraction)
+
+    gpsData.persist()
+
+    println("Points before filtering: " + gpsData.count())
+
+    val gpsDataFiltered = gpsData
+      .filter(p => myGrid.clearanceBoxHasPoint(p))
+
+    gpsDataFiltered.persist()
+    gpsData.unpersist()
+
+    println("Points after filtering: " + gpsDataFiltered.count())
+
+    //We now load the open street map data and collect the information about ways
     val mapData: TripleRDD = NTripleReader.load(spark, JavaURI.create(osm_data))
 
     val waysTriples = mapData
@@ -60,54 +80,130 @@ object App {
 
     val waysData = waysTriples
       .map(a => (findWayID(a.getSubject.toString),a.getObject.toString))
+      .map{case (id, way) => new Way(lineStringToPointArray(way).toList,id)}
 
-    val segmentsData = waysData
-      .flatMapValues(lineStringToSegmentArray)
-      .filter(a => isSegmentInRegion(a._2,osmBox))
+    waysData.persist()
 
-    val minResolution = segmentsData
-      .map(a => coordinatesDifference(a._2))
-      .reduce((a,b) => (List(a._1,b._1).max, List(a._2,b._2).max))
+    println("Ways before filtering: " + waysData.count())
 
-    val resolution = (minResolution._1,minResolution._2)
-    val divisions = computeDivisions(osmBox, resolution)
+    val waysDataFiltered = waysData
+      .filter(w => myGrid.hasWay(w))
 
-    val gpsDataIndexed = gpsData
-      .map(p => (gridBoxOfPoint(osmBox,divisions._1,divisions._2,p),p))
+    waysDataFiltered.persist()
 
-    val segmentsDataIndexed = segmentsData
-      .map(s => (gridBoxOfSegment(osmBox,divisions._1, divisions._2, s._2),s))
+    println("Ways after filtering: " + waysDataFiltered.count())
+
+    val gpsDataIndexed = gpsDataFiltered
+      .map(p => (myGrid.indexPoint(p),p))
+
+    gpsDataIndexed.persist()
+
+    println("Points before Flattening: " + gpsDataIndexed.count())
+
+    val gpsDataIndexedFlatted = gpsDataIndexed
       .flatMap{case (k,v) => for (i <- k) yield (i, v)}
+
+    gpsDataIndexed.unpersist()
+    gpsDataIndexedFlatted.persist()
+
+    println("Points after Flattening: " + gpsDataIndexedFlatted.count())
+
+    val waysDataIndexed = waysDataFiltered
+      .map(w => (myGrid.indexWay(w),w))
+      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
+
+    waysDataFiltered.unpersist()
+    waysDataIndexed.persist()
+
+    println("Ways before Grouping: " + waysDataIndexed.count())
+
+    val waysDataIndexedGrouped = waysDataIndexed
       .groupByKey
       .mapValues(_.toList)
 
-    val mergedData = gpsDataIndexed
-      .join(segmentsDataIndexed)
-      .map(a => a._2)
+    waysDataIndexedGrouped.persist()
+    waysDataIndexed.unpersist()
 
-    val matchedData = mergedData
-      .map{case (p: Point, s: List[(String, Segment)]) => (naiveBayesClassifierMM(p,s),p,s)}
-      .map{case ((way, new_p), p,s) => (way, p, new_p,s)}
+    println("Ways after Indexing and Grouping: " + waysDataIndexedGrouped.count())
 
+    val cells = waysDataIndexedGrouped.take(10).toList
+    val pw = new PrintWriter("/home/pablo/cellWaysRDD.json")
+
+    cellsWaysToJSON(pw,cells,myGrid)
+
+    val mergedData = gpsDataIndexedFlatted
+      .join(waysDataIndexedGrouped)
+
+    mergedData.persist()
+
+    val mergedDataV = mergedData.map{case (index,(p, ways)) => (p, (index, ways))}
+
+    println("MergedData: " + mergedData.count())
+
+    val mergedDataGroupedV = mergedDataV
+      .groupByKey
+      .mapValues(_.toList)
+
+    val mergedDataGrouped = mergedData
+      .values
+      .groupByKey
+      .mapValues(_.flatten.toList)
+
+    mergedData.unpersist()
+
+    mergedDataGroupedV.persist()
+
+    println("MergedDataGrouped: " + mergedDataGroupedV.count())
+
+    val sample = mergedDataGroupedV.take(10).toList
+
+    mergedDataGroupedV.unpersist()
+
+    val pw2 = new PrintWriter("/home/pablo/mergedDataRDD.json")
+    mergedDataToJSON(pw2,sample,myGrid)
+
+    waysDataIndexedGrouped.unpersist()
+    gpsDataIndexedFlatted.unpersist()
+
+    val matchedData = mergedDataGrouped
+      .map{case (p: Point, waysLst: List[Way]) => (geometricMM(p,waysLst.flatMap(_.toSegmentsList),90),p,waysLst)}
+      .map{case ((way, new_p), p, ways) => (way, p, new_p, ways)}
+
+    matchedData.map{case (way, p, new_p, _) => (way.osmID, p.id, p.lat, p.lon, new_p.lat, new_p.lon)}
+      .toDF("waysID","pointID","latitude","longitude","matched latitude","matched longitude")
+      .coalesce(1).write.csv("/home/pablo/results")
+
+
+//    val someResults =  matchedData.take(1)
+//      .map{case ((w, m_p),p,lstW) => (w,p,m_p,lstW)}
 //
-//    matchedData.map{case (wayId, p, new_p) => (wayId, p.id, p.lat, p.lon, new_p.lat, new_p.lon)}
-//      .toDF("waysID","pointID","latitude","longitude","matched latitude","matched longitude")
-//      .coalesce(1).write.csv("/home/pablo/results")
+//    println(someResults.length)
+//
+//    val pw = new PrintWriter("/home/pablo/geojsonResults.json")
+//    val jsonResults = someResults
+//      .map(a => (a._2,a._3,a._4)).toList
+//
+//    println(jsonResults.head._3.size)
+//
+//    resultsToJSON(pw, jsonResults)
+//
+//    someResults.foreach{
+//
+//      case (id, p, new_p, _) =>
+//
+//        println("Id of way: " + id.toString)
+//        println("Map Matched Point: " + new_p.toString)
+//        println("Original Point: " + p.toString)
 
-    val someResults =  matchedData.take(5)
-
-    val pw = new PrintWriter("/home/pablo/geojsonResults.json")
-
-    pw.println("{\"type\": \"FeatureCollection\" ,\"features\":[")
-    someResults.zipWithIndex.foreach{case (r,i) => writeToJSON(r,pw); if (i!= someResults.length -1) pw.println(",")}
-    pw.println("]}")
-    pw.close()
-
-    someResults.foreach{
-      case (id, p, new_p, _) =>
-        println("Id of way: " + id.toString)
-        println("Map Matched Point: " + new_p.toString)
-        println("Original Point: " + p.toString)}
+//    }
+//
+//    someResults.foreach{
+//
+//      case (w, p, _, _) =>
+//        println(pointToJSON(p))
+//        println(wayToJSON(w))
+//
+//    }
 
   }
 
@@ -126,5 +222,6 @@ object App {
       text("path to file that contains the gps data (in .csv format)")
 
     help("help").text("prints this usage text")
+
   }
 }

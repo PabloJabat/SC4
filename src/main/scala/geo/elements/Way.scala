@@ -1,13 +1,13 @@
 package geo.elements
 
 
-class Way (val points: List[Point]) extends Serializable{
+class Way (val points: List[Point], val osmID: String) extends Serializable{
 
   def toSegmentsList: List[Segment] = {
 
     points
       .sliding(2,1)
-      .map{case List(a,b) => new Segment(a,b)}
+      .map{case List(a,b) => new Segment(a,b,osmID)}
       .toList
 
   }
@@ -23,9 +23,40 @@ class Way (val points: List[Point]) extends Serializable{
 
   }
 
+  def distToPoint(p: Point, t: Double = 30.0): Double = {
+
+    try {
+
+      points
+        .sliding(2,1)
+        .map(lstPoints => new Segment(lstPoints.head,lstPoints(1)))
+        .filter(s => s.isSegmentAligned(p,t))
+        .map(s => p.projectToSegment(s))
+        .map(a => a.distToPoint(p))
+        .min
+
+    } catch {
+
+      case _: UnsupportedOperationException =>
+
+        distToPoint(p)
+
+    }
+
+  }
+
   def toListList: List[List[Double]] = {
 
     points.map(a => a.toList)
+
+  }
+
+  def osmBoxSize: (Double, Double) = {
+
+    val latDiff = points.map(_.lat).max - points.map(_.lat).min
+    val lonDiff = points.map(_.lon).max - points.map(_.lon).min
+
+    (latDiff, lonDiff)
 
   }
 
