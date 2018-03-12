@@ -8,7 +8,6 @@ import scala.math.abs
 
 object Transform {
 
-
   def lineHasWay (line: String): Boolean = {
 
     val pattern = "<http://www.opengis.net/ont/geosparql#asWKT>".r

@@ -3,7 +3,7 @@ package geo.elements
 import geo.math.algebra._
 import math.Pi
 
-class Grid(box: BoxLimits, resolution: Double, clearance: Double = 50) extends Serializable {
+class Grid(box: BoxLimits, resolution: Double, clearance: Double = 50, radius: Double = 30) extends Serializable {
 
   def computeLatDivisions: Int = {
 
@@ -64,7 +64,7 @@ class Grid(box: BoxLimits, resolution: Double, clearance: Double = 50) extends S
 
   }
 
-  def indexPoint(p: Point, radius: Double = 30): List[String] = {
+  def indexPoint(p: Point): List[String] = {
 
     val increment = metersToDegrees(radius)
 
@@ -100,7 +100,8 @@ class Grid(box: BoxLimits, resolution: Double, clearance: Double = 50) extends S
   def getCellCoordinates(index: String): List[Point] = {
 
     val pattern = "([0-9]+)-([0-9]+)".r
-    val (latIndex,lonIndex) = index match {case pattern(lat,lon) => (lat.toInt,lon.toInt)}
+    val pattern(lat,lon) = index
+    val (latIndex,lonIndex) = (lat.toInt,lon.toInt)
 
     val minLat = (latIndex - 1) * latResolution + box.minLat
     val maxLat = latIndex * latResolution + box.minLat

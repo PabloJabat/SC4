@@ -49,7 +49,7 @@ object AppGridTest {
       .toList
 
 
-    val pointIndexes = myGrid.indexPoint(p,15).distinct
+    val pointIndexes = myGrid.indexPoint(p).distinct
 
     println(pointIndexes)
 
@@ -74,8 +74,7 @@ object AppGridTest {
     val pw1 = new PrintWriter("/home/pablo/gridways.json")
     val pw2 = new PrintWriter("/home/pablo/othergridways.json")
 
-    pointWaysToJSON(pw1,waysOfPoint,p,pointIndexes,myGrid)
-    otherWaysToJSON(pw2,otherWays)
+    indexedDataToJSON(pw1,List((p,waysOfPoint)),myGrid)
 
     println(waysOfPoint.length)
 

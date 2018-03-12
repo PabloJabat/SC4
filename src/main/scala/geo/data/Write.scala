@@ -19,7 +19,7 @@ object Write {
 
   implicit val formats: DefaultFormats = DefaultFormats
 
-  private def pointToJSON(p: Point): String = {
+  private def pointToJSON (p: Point): String = {
 
     val vector = List(p.toList,p.computePointDistanceBearing(15).toList)
 
@@ -27,13 +27,13 @@ object Write {
 
   }
 
-  private def wayToJSON(w: Way, properties: Any = Empty()): String = {
+  private def wayToJSON (w: Way, properties: Any = Empty()): String = {
 
     write(Geometry(WayGeoJSON(w.toListList),properties = properties))
 
   }
 
-  private def boxToJSON(points: List[Point]): String = {
+  private def boxToJSON (points: List[Point]): String = {
 
     val myProperties = PolygonProperties("#555555",2,1,"#555555",0)
     val listPoints = List(points.map(_.toList))
@@ -41,7 +41,7 @@ object Write {
 
   }
 
-  private def insertComma(lines: List[String]): List[String] = {
+  private def insertComma (lines: List[String]): List[String] = {
 
     lines.init.map(_ + ",") ++ List(lines.last)
 
