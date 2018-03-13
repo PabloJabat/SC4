@@ -5,6 +5,7 @@ import org.apache.spark.sql._
 
 import geo.elements._
 import geo.data.Read._
+import geo.data.Transform._
 import geo.data.Write._
 import geo.algorithms.MapMatching._
 
