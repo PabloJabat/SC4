@@ -49,15 +49,15 @@ object App {
 
     //We load and index the GPS data
 
-    val gpsData = loadGPSPoints(spark, gps_data)
+    val gpsData = loadGPSPointsSpark(spark, gps_data)
 
-    val gpsDataIndexed = filterIndexGPSPoints(gpsData, myGrid)
+    val gpsDataIndexed = filterIndexGPSPointsSpark(gpsData, myGrid)
 
     //We load and index and group the Ways data
 
-    val waysData = loadMap(spark, osm_data)
+    val waysData = loadMapSpark(spark, osm_data)
 
-    val waysDataIndexed = filterIndexMap(waysData, myGrid)
+    val waysDataIndexed = filterIndexMapSpark(waysData, myGrid)
 
     //Now we are going to write a file with some sample data of ways already indexed
 
@@ -73,7 +73,7 @@ object App {
 
     //The last step is to join both RDDs
 
-    val mergedData = joinIndexedMapPoints(gpsDataIndexed, waysDataIndexed)
+    val mergedData = joinIndexedMapPointsSpark(gpsDataIndexed, waysDataIndexed)
 
     //Now we want to visualize some of the inputs for the Map Matching algorithm
 
@@ -107,7 +107,7 @@ object App {
 
     val someResults =  matchedData.take(20)
 
-    val pw3 = new PrintWriter("/home/pablo/GeoJSON/MMResults.json")
+    val pw3 = new PrintWriter("/home/pablo/GeoJSON/MMResultsRDD.json")
 
     val jsonResults = someResults
       .map(a => (a._2, a._3, a._4)).toList
