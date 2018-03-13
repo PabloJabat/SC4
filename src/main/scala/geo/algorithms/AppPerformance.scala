@@ -25,33 +25,39 @@ object AppPerformance {
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .getOrCreate()
 
-      val sc = spark.sparkContext
-
       println("======================================")
       println("|   Simple Map Matching Performance  |")
       println("======================================")
 
-      val matchedData = sc.textFile(gps_matched_data)
-        .map(_.split(",").toList)
-        .map(matchedGPSDataExtraction)
+      //We load the results obtained after computing the map matching algorithm
 
-      val refData = sc.textFile(gps_data)
-        .map(_.split(",").toList)
-        .map(referenceGPSDataExtraction)
+      val matchedData = loadResultsData(spark, gps_matched_data)
+
+      //We load the reference data
+
+      val refData = loadRefData(spark, gps_data)
+
+      //We join both RDDs using the object Point as the key
 
       val joinedData = refData.join(matchedData)
 
-      val joinedDataCount = joinedData.count()
-
       joinedData.persist()
 
+      //We count the number of points taken into account
+
+      val joinedDataCount = joinedData.count()
+
+      //We compute the correct matches and print the accuracy of the results
+
       val correctMatches = joinedData
-        .filter{case (_, waysID) => waysID._2 == waysID._1}
+        .filter{case (_, osmID) => osmID._2 == osmID._1}
         .count()
 
-      val performance = (correctMatches*10000/joinedDataCount).toDouble/100
+      val accuracy = (correctMatches*10000/joinedDataCount).toDouble/100
 
-      println("% Performance: " + performance)
+      println("% Accuracy: " + accuracy)
+
+      //We take a sample of incorrect matches and write them in a file
 
       val incorrectMatches = joinedData
         .filter{case (_, waysID) => !(waysID._2 == waysID._1)}
