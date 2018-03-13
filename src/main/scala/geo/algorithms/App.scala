@@ -104,12 +104,12 @@ object App {
 
     //We can also write some results in geojson format for visualization purposes
 
-    val someResults =  matchedData.take(1)
+    val someResults =  matchedData.take(20)
 
     val pw3 = new PrintWriter("/home/pablo/GeoJSON/MMResults.json")
 
     val jsonResults = someResults
-      .map(a => (a._2,a._3, a._4)).toList
+      .map(a => (a._2, a._3, a._4)).toList
 
     resultsToJSON(pw3, jsonResults, myGrid)
 
