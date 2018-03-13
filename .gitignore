@@ -32,3 +32,6 @@ project/plugins/project/
 .idea/
 *.iml
 *.sc
+
+#My changes
+classes/
