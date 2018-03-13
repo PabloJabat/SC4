@@ -79,19 +79,6 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
 
   }
 
-  def proximityToSegment (s: Segment): Double = {
-
-    val p = this.toGeoVector
-    val a = s.a.toGeoVector
-    val b = s.b.toGeoVector
-
-    val v = a x b
-    val u = v.normalize
-
-    abs(p*u)
-
-  }
-
   def projectionInSegment (s: Segment): Boolean = {
 
     val a = s.a.toGeoVector
@@ -113,8 +100,6 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
 
     if (projectionInSegment(s)) {
 
-      val d = proximityToSegment(s)
-
       val x = this.toGeoVector
       val a = s.a.toGeoVector
       val b = s.b.toGeoVector
@@ -122,7 +107,7 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
       val v = a x b
       val u = v.normalize
 
-      val x_p = x - u * d
+      val x_p = x - u * (x * u)
       val x_pp = x_p.normalize
 
       x_pp.toPoint
