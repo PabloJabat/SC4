@@ -3,6 +3,8 @@ package geo.elements
 
 class Way (val points: List[Point], val osmID: String) extends Serializable{
 
+  override def toString: String = "Way@" + osmID
+
   def toSegmentsList: List[Segment] = {
 
     points
