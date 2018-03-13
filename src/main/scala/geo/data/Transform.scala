@@ -1,10 +1,8 @@
 package geo.data
 
-import geo.elements.{Point, Segment, Way}
-import geo.math.algebra._
-
+import geo.elements._
+import org.apache.spark.rdd.RDD
 import scala.collection.mutable.ListBuffer
-import scala.math.abs
 
 object Transform {
 
@@ -72,7 +70,7 @@ object Transform {
 
   }
 
-  def lineStringtoWay(data: String): Way = {
+  def lineStringToWay(data: String): Way = {
 
     new Way(lineStringToPointArray(data).toList,lineStringFindWayId(data))
 
@@ -91,6 +89,37 @@ object Transform {
     val pattern = "urn:osm:way:geometry:uuid:([0-9]+)".r
     val pattern(id) = way
     id
+
+  }
+
+
+  def filterIndexMap(rddWays: RDD[Way], grid: Grid): RDD[(String, List[Way])] = {
+
+    rddWays
+      .filter(w => grid.hasWay(w))
+      .map(w => (grid.indexWay(w),w))
+      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
+      .groupByKey
+      .mapValues(_.toList)
+
+  }
+
+  def filterIndexGPSPoints(rddGPSPoints: RDD[Point], grid: Grid): RDD[(String, Point)] = {
+
+    rddGPSPoints
+      .filter(p => grid.clearanceBoxHasPoint(p))
+      .map(p => (grid.indexPoint(p),p))
+      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
+
+  }
+
+  def joinIndexedMapPoints(rddGPSPoints: RDD[(String, Point)], rddWays: RDD[(String, List[Way])]): RDD[(Point, List[Way])] = {
+
+    rddGPSPoints.join(rddWays)
+      .values
+      .groupByKey
+      .flatMapValues(_.toList)
+    // .mapValues(_.flatten.toList)
 
   }
 

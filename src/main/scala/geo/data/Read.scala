@@ -57,36 +57,6 @@ object Read {
 
   }
 
-  def filterIndexMap(rddWays: RDD[Way], grid: Grid): RDD[(String, List[Way])] = {
-
-    rddWays
-      .filter(w => grid.hasWay(w))
-      .map(w => (grid.indexWay(w),w))
-      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
-      .groupByKey
-      .mapValues(_.toList)
-
-  }
-
-  def filterIndexGPSPoints(rddGPSPoints: RDD[Point], grid: Grid): RDD[(String, Point)] = {
-
-    rddGPSPoints
-      .filter(p => grid.clearanceBoxHasPoint(p))
-      .map(p => (grid.indexPoint(p),p))
-      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
-
-  }
-
-  def joinIndexedMapPoints(rddGPSPoints: RDD[(String, Point)], rddWays: RDD[(String, List[Way])]): RDD[(Point, List[Way])] = {
-
-    rddGPSPoints.join(rddWays)
-      .values
-      .groupByKey
-      .flatMapValues(_.toList)
-     // .mapValues(_.flatten.toList)
-
-  }
-
 
   private def pointExtraction(list: List[String]): Point = {
     //We first put the 4th entry as it is the latitude and we want the LatLon array
