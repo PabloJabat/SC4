@@ -20,10 +20,10 @@ object AppTest {
 
     }
 
-    val p = new Point(40.637, 22.953, 315)
+    val p = new Point(40.6379, 22.9362, 45)
 
     //We create the grid that we are going to use
-    val osmBox = BoxLimits(40.638, 40.63, 22.96, 22.9450)
+    val osmBox = BoxLimits(40.64133, 40.63579, 22.94079, 22.93134)
 
     val myGrid = new Grid(osmBox,80)
 
@@ -41,20 +41,26 @@ object AppTest {
     //We filter the necessary ways
     val waysOfPoint = getWaysOfIndexes(waysDataIndexed, pointIndexes)
 
+    println("Total number of ways: " + waysOfPoint.length)
+
     //We write to geojson all the ways that will we introduced in the MM algorithm
     val waysToJSON = getIndexedWaysOfIndexes(waysDataIndexed, pointIndexes)
+
+    waysToJSON.foreach(a => println("Number of ways in " + a._1 + ":" + a._2.length))
 
     val pw1 = new PrintWriter("/home/pablo/GeoJSON/CellWays.json")
 
     cellsToJSON(pw1, waysToJSON, myGrid)
 
     //We call the map matching algorithm
-    val result = geometricMM2(p, waysOfPoint)
+    val result = naiveBayesClassifierMM(p, waysOfPoint,1,10)
 
     //We write the result to geojson
     val pw2 = new PrintWriter("/home/pablo/GeoJSON/MMResult.json")
 
     resultsToJSON(pw2, List((p, result._2, waysOfPoint)), myGrid)
+
+    println("OSM Id: "+ result._1.osmID)
 
   }
 
