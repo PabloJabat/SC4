@@ -1,25 +1,17 @@
 package geo.algorithms
 
 import java.io.PrintWriter
+import geo.elements._
+import geo.data.Read._
 import geo.data.Transform._
-import geo.elements.{BoxLimits, Grid}
-import geo.elements.Point
 import geo.data.Write._
+import geo.algorithms.MapMatching._
 
-import scala.io.Source
-
-object AppGridTest {
+object AppTest {
 
   def main(args: Array[String]): Unit = {
 
-    def allElementsInList(lst: List[String], elements: List[String]): Boolean = {
-
-      val comparison = elements.map(e => lst.contains(e))
-
-      comparison.reduce(_ && _)
-
-    }
-
+    //We create a function that will be used to check if at least one of the elements appears in the lst variable
     def someElementsInList(lst: List[String], elements: List[String]): Boolean = {
 
       val comparison = elements.map(e => lst.contains(e))
@@ -30,53 +22,39 @@ object AppGridTest {
 
     val p = new Point(40.637, 22.953, 315)
 
-    val osmData = Source.fromFile(args(0)).getLines()
-
-    val waysData = osmData
-      .filter(line => lineHasWay(line))
-      .map(line => lineStringtoWay(line))
-      .toList
-
+    //We create the grid that we are going to use
     val osmBox = BoxLimits(40.638, 40.63, 22.96, 22.9450)
+
     val myGrid = new Grid(osmBox,80)
 
-    val waysDataIndexed = waysData
-      .filter(w => myGrid.hasWay(w))
-      .map(w => (myGrid.indexWay(w), w))
-      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
-      .groupBy{case (k,v) => k}
-      .map(a => (a._1, a._2.map(b => b._2)))
-      .toList
+    //We load the map with to a List[Way]
+    val waysData = loadMap(args(0))
 
+    //We index the ways using the grid we just created
+    val waysDataIndexed = filterIndexMap(waysData, myGrid)
 
+    //We get the indexes of our point and print them
     val pointIndexes = myGrid.indexPoint(p).distinct
 
     println(pointIndexes)
 
-    val waysOfPoint = waysDataIndexed
-      .filter{case (k,v) => pointIndexes.contains(k)}
-      .flatMap(a => a._2)
+    //We filter the necessary ways
+    val waysOfPoint = getWaysOfIndexes(waysDataIndexed, pointIndexes)
 
-//    val otherWays = waysDataIndexed
-//      .filter{case (k,v) => !pointIndexes.contains(k)}
-//      .flatMap(a => a._2)
+    //We write to geojson all the ways that will we introduced in the MM algorithm
+    val waysToJSON = getIndexedWaysOfIndexes(waysDataIndexed, pointIndexes)
 
-    val otherWays = waysData
-      .filter(w => myGrid.hasWay(w))
-      .map(w => (myGrid.indexWay(w), w))
-      .filter{case (indexes, _) => !someElementsInList(indexes,pointIndexes)}
-      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
-      .groupBy{case (k,v) => k}
-      .map(a => (a._1, a._2.map(b => b._2)))
-      .toList
-      .flatMap(a => a._2)
+    val pw1 = new PrintWriter("/home/pablo/GeoJSON/CellWays.json")
 
-    val pw1 = new PrintWriter("/home/pablo/gridways.json")
-    val pw2 = new PrintWriter("/home/pablo/othergridways.json")
+    cellsToJSON(pw1, waysToJSON, myGrid)
 
-    indexedDataToJSON(pw1,List((p,waysOfPoint)),myGrid)
+    //We call the map matching algorithm
+    val result = geometricMM2(p, waysOfPoint)
 
-    println(waysOfPoint.length)
+    //We write the result to geojson
+    val pw2 = new PrintWriter("/home/pablo/GeoJSON/MMResult.json")
+
+    resultsToJSON(pw2, List((p, result._2, waysOfPoint)), myGrid)
 
   }
 
