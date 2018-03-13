@@ -9,7 +9,7 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
   //if we don't need information about the orientation we can use this constructor
   def this(lat: Double, lon: Double, id: String) ={
 
-    this(lat,lon,-1,"")
+    this(lat,lon,-1,id)
 
   }
 
