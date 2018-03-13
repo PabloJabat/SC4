@@ -8,10 +8,11 @@ import net.liftweb.json.Serialization.write
 object Write {
 
   case class Empty()
-  case class Geometry(geometry: Any,`type`: String = "Feature", properties: Any = Empty())
+  case class Geometry(geometry: Any, properties: Any = Empty(),`type`: String = "Feature")
 
   case class PolygonProperties(stroke: String,`stroke-width`: Int,`stroke-opacity`: Int,fill: String, `fill-opacity`: Int)
   case class LineStringProperties(stroke: String,`stroke-width`: Int,`stroke-opacity`: Int)
+  case class MarkerProperties(`marker-color`: String,`marker-size`: String, `marker-symbol`: String = "")
 
   case class PointGeoJSON(coordinates: List[Double],`type`: String = "Point")
   case class WayGeoJSON(coordinates: List[List[Double]],`type`: String = "LineString")
@@ -19,11 +20,19 @@ object Write {
 
   implicit val formats: DefaultFormats = DefaultFormats
 
-  private def pointToJSON (p: Point): String = {
+  private def orientedPointToJSON (p: Point): String = {
 
     val vector = List(p.toList,p.computePointDistanceBearing(15).toList)
 
     write(Geometry(PointGeoJSON(p.toList))) + "," + write(Geometry(WayGeoJSON(vector)))
+
+  }
+
+  private def pointToJSON (p: Point): String = {
+
+    val myProperties = MarkerProperties("#be3939","medium")
+
+    write(Geometry(PointGeoJSON(p.toList), myProperties))
 
   }
 
@@ -62,7 +71,7 @@ object Write {
   def indexedDataToJSON (pw: PrintWriter, indexedData: List[(Point,List[Way])], grid: Grid): Unit = {
 
     val points = indexedData
-      .map(r => pointToJSON(r._1))
+      .map(r => orientedPointToJSON(r._1))
 
     val cells = indexedData
       .map(r => r._1)
@@ -81,7 +90,7 @@ object Write {
   def resultsToJSON (pw: PrintWriter, results: List[(Point, Point, List[Way])], grid: Grid): Unit = {
 
     val points = results
-      .map(r => pointToJSON(r._1))
+      .map(r => orientedPointToJSON(r._1))
 
     val matchedPoints = results
       .map(r => pointToJSON(r._2))
