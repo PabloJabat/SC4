@@ -1,13 +1,14 @@
 package geo.data
 
-import geo.elements.{Grid, Point, Way}
-import geo.data.Transform.{findWayID, lineStringToPointArray, stringToPoint}
+import geo.elements._
+import geo.data.Transform._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+import scala.io.Source
 
 object Read {
 
-  def loadMap(spark: SparkSession, mapPath: String): RDD[Way] = {
+  def loadMapSpark(spark: SparkSession, mapPath: String): RDD[Way] = {
 
     import java.net.{URI => JavaURI}
     import net.sansa_stack.rdf.spark.io.NTripleReader
@@ -27,7 +28,7 @@ object Read {
 
   }
 
-  def loadGPSPoints(spark: SparkSession, gpsDataPath: String): RDD[Point] = {
+  def loadGPSPointsSpark(spark: SparkSession, gpsDataPath: String): RDD[Point] = {
 
     val pattern = """([^";]+)""".r
 
@@ -57,6 +58,17 @@ object Read {
 
   }
 
+  def loadMap(mapPath: String): List[Way] = {
+
+    val osmData = Source.fromFile(mapPath).getLines()
+
+    osmData
+      .filter(line => lineHasWay(line))
+      .map(line => lineStringToWay(line))
+      .toList
+
+  }
+
 
   private def pointExtraction(list: List[String]): Point = {
     //We first put the 4th entry as it is the latitude and we want the LatLon array
@@ -79,18 +91,6 @@ object Read {
     val point = new Point(list(4).toDouble, list(3).toDouble, id)
 
     (point, pattern.findFirstIn(list(9)).get)
-
-  }
-
-  private def matchedGPSDataExtractionStats(list: List[String]): (Point, String, Double, Point) = {
-
-    val pattern1 = "[0-9]+".r
-    val pattern2 = "[0-9]+.[0-9]+".r
-
-    (new Point(list(4).toDouble,list(3).toDouble, list(7).toDouble),
-      pattern1.findFirstIn(list(9)).get,
-      pattern2.findFirstIn(list(9)).get.toDouble,
-      stringToPoint(list(11)))
 
   }
 
