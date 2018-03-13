@@ -93,7 +93,32 @@ object Transform {
   }
 
 
-  def filterIndexMap(rddWays: RDD[Way], grid: Grid): RDD[(String, List[Way])] = {
+  def filterIndexMap(lstWays: List[Way], grid: Grid): List[(String, List[Way])] = {
+
+    lstWays
+      .filter(w => grid.hasWay(w))
+      .map(w => (grid.indexWay(w), w))
+      .flatMap{case (k,v) => for (i <- k) yield (i, v)}
+      .groupBy{case (k,_) => k}
+      .map(a => (a._1, a._2.map(b => b._2)))
+      .toList
+
+  }
+
+  def getIndexedWaysOfIndexes(lstWays: List[(String,List[Way])], indexes: List[String]): List[(String, List[Way])] = {
+
+    lstWays
+      .filter{case (k,_) => indexes.contains(k)}
+
+  }
+
+  def getWaysOfIndexes(lstWays: List[(String,List[Way])], indexes: List[String]): List[Way] = {
+
+    getIndexedWaysOfIndexes(lstWays, indexes).flatMap(a => a._2)
+
+  }
+
+  def filterIndexMapSpark(rddWays: RDD[Way], grid: Grid): RDD[(String, List[Way])] = {
 
     rddWays
       .filter(w => grid.hasWay(w))
@@ -104,7 +129,7 @@ object Transform {
 
   }
 
-  def filterIndexGPSPoints(rddGPSPoints: RDD[Point], grid: Grid): RDD[(String, Point)] = {
+  def filterIndexGPSPointsSpark(rddGPSPoints: RDD[Point], grid: Grid): RDD[(String, Point)] = {
 
     rddGPSPoints
       .filter(p => grid.clearanceBoxHasPoint(p))
@@ -113,7 +138,7 @@ object Transform {
 
   }
 
-  def joinIndexedMapPoints(rddGPSPoints: RDD[(String, Point)], rddWays: RDD[(String, List[Way])]): RDD[(Point, List[Way])] = {
+  def joinIndexedMapPointsSpark(rddGPSPoints: RDD[(String, Point)], rddWays: RDD[(String, List[Way])]): RDD[(Point, List[Way])] = {
 
     rddGPSPoints.join(rddWays)
       .values
