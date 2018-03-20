@@ -78,6 +78,7 @@ class Grid(box: BoxLimits, resolution: Double, clearance: Double = 50, radius: D
     listPoints
       .map(indexPointInCell)
       .distinct
+      .filter(_ != "NaN-NaN")
 
   }
 
