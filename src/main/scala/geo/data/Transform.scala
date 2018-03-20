@@ -142,9 +142,8 @@ object Transform {
 
     rddGPSPoints.join(rddWays)
       .values
-      .groupByKey
-      .flatMapValues(_.toList)
-    // .mapValues(_.flatten.toList)
+      .reduceByKey(_ ++ _)
+      .mapValues(_.distinct)
 
   }
 
