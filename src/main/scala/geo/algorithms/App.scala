@@ -39,9 +39,9 @@ object App {
 
     //We first set the region on the map in which we want to perform map matching
 
-    val osmBox = BoxLimits(40.6486, 40.6374, 22.9478, 22.9298)
+    val osmBox = BoxLimits(40.65, 40.64, 22.94, 22.93)
 
-    val myGrid = new Grid(osmBox,150)
+    val myGrid = new Grid(osmBox,150,0)
 
     println("Number of latitude divisions: " + myGrid.latDivisions)
 
@@ -105,16 +105,16 @@ object App {
 
     //We can also write some results in geojson format for visualization purposes
 
-    val someResults =  matchedData.take(20)
+    val someResults = matchedData.take(20).toList
 
     val pw3 = new PrintWriter("/home/pablo/GeoJSON/MMResultsRDD.json")
 
     val jsonResults = someResults
-      .map(a => (a._2, a._3, a._4)).toList
+      .map(a => (a._2, a._3, a._4))
 
     resultsToJSON(pw3, jsonResults, myGrid)
 
-    }
+  }
 
   case class Config(in1: String = "", in2: String = "")
 
