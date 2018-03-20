@@ -7,7 +7,7 @@ import scala.math._
 class Point (val lat: Double, val lon: Double, val orientation: Double, val id: String) extends Serializable{
 
   //if we don't need information about the orientation we can use this constructor
-  def this(lat: Double, lon: Double, id: String) ={
+  def this(lat: Double, lon: Double, id: String) = {
 
     this(lat,lon,-1,id)
 
@@ -42,7 +42,7 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
 
    that match {
 
-     case that: Point => that == this && that.hashCode() == this.hashCode()
+     case that: Point => (this.lat == that.lat) && (this.lon == that.lon) && (this.id == that.id)
      case _ => false
 
    }
@@ -168,11 +168,6 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
   }
 
   //Point operators
-  def == (p: Point): Boolean = {
-
-    (lat == p.lat) && (lon == p.lon)
-
-  }
 
   def - (p:Point): (Double, Double) = {
 
