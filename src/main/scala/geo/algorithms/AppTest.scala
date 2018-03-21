@@ -53,7 +53,7 @@ object AppTest {
     cellsToJSON(pw1, waysToJSON, myGrid)
 
     //We call the map matching algorithm
-    val result = naiveBayesClassifierMM(p, waysOfPoint,1,10)
+    val result = geometricMM2(p, waysOfPoint)
 
     //We write the result to geojson
     val pw2 = new PrintWriter("/home/pablo/GeoJSON/MMResult.json")

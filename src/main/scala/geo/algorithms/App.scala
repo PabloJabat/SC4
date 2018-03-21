@@ -97,8 +97,8 @@ object App {
 
     matchedData.persist()
 
-    matchedData.map{case (way, p, new_p, _) => (way.osmID, p.id, p.lat, p.lon, new_p.lat, new_p.lon)}
-      .toDF("waysID","pointID","latitude","longitude","matched latitude","matched longitude")
+    matchedData.map{case (way, p, new_p, _) => (way.osmID, p.id, p.lat, p.lon, p.orientation, new_p.lat, new_p.lon)}
+      .toDF("wayID","pointID","latitude","longitude","orientation","matched latitude","matched longitude")
       .coalesce(1).write.csv("/home/pablo/results")
 
     matchedData.unpersist()

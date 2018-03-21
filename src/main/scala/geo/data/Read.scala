@@ -38,7 +38,7 @@ object Read {
 
   }
 
-  def loadRefData(spark: SparkSession, refGPSDataPath: String): RDD[(Point, String)] = {
+  def loadRefData(spark: SparkSession, refGPSDataPath: String): RDD[(Point, (String, Point))] = {
 
     val sc = spark.sparkContext
 
@@ -48,7 +48,7 @@ object Read {
 
   }
 
-  def loadResultsData(spark: SparkSession, matchedGPSDataPath: String): RDD[(Point, String)] = {
+  def loadResultsData(spark: SparkSession, matchedGPSDataPath: String): RDD[(Point, (String, Point))] = {
 
     val sc = spark.sparkContext
 
@@ -76,21 +76,37 @@ object Read {
 
   }
 
-  private def matchedGPSDataExtraction(list: List[String]): (Point, String) = {
+  private def matchedGPSDataExtraction(list: List[String]): (Point, (String, Point)) = {
 
-    val point = new Point(list(2).toDouble, list(3).toDouble, list(1))
+    val point = new Point(list(2).toDouble, list(3).toDouble, list(4).toDouble, list(1))
+    val matchedPoint = new Point(list(5).toDouble,list(6).toDouble)
+    val wayID = list.head
 
-    (point, list.head)
+    (point, (wayID, matchedPoint))
 
   }
 
-  private def referenceGPSDataExtraction(list: List[String]): (Point, String) = {
+  private def referenceGPSDataExtraction(list: List[String]): (Point, (String, Point)) = {
+
+    def getPoint(str: String): Point = {
+      val patternQuotes = "([^\"]+)".r
+      val patternLatLon = "([0-9]+.[0-9]+) ([0-9]+.[0-9]+)".r
+
+      patternQuotes.findFirstIn(str).get match {
+        case patternLatLon(lat,lon) => new Point(lat.toDouble,lon.toDouble)
+      }
+    }
 
     val pattern = "([^{}]+)".r
-    val id = list(1) + " " + list(2)
-    val point = new Point(list(4).toDouble, list(3).toDouble, id)
 
-    (point, pattern.findFirstIn(list(9)).get)
+    val wayID = pattern.findFirstIn(list(9)).get
+    val matchedPoint = getPoint(pattern.findFirstIn(list(11)).get)
+    val orientation = list(7).toDouble
+    val id = list(1) + " " + list(2)
+
+    val point = new Point(list(4).toDouble, list(3).toDouble, orientation, id)
+
+    (point, (wayID, matchedPoint))
 
   }
 

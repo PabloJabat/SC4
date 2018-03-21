@@ -28,9 +28,9 @@ object Write {
 
   }
 
-  private def pointToJSON (p: Point): String = {
+  private def pointToJSON (p: Point, color: String): String = {
 
-    val myProperties = MarkerProperties("#be3939","medium")
+    val myProperties = MarkerProperties(color,"medium")
 
     write(Geometry(PointGeoJSON(p.toList), myProperties))
 
@@ -87,13 +87,46 @@ object Write {
 
   }
 
+  def incorrectMatchesToJSON (pw: PrintWriter, indexedData: List[(Point,List[Way],(Point, Point))], grid: Grid): Unit = {
+
+    //the first point in the Tuple2 of points is the correct one and the second is the one obtained in the MM algorithm
+
+    val points = indexedData
+      .map(r => orientedPointToJSON(r._1))
+
+    val cells = indexedData
+      .map(r => r._1)
+      .flatMap(p => grid.indexPoint(p))
+      .distinct
+      .map(index => grid.getCellCoordinates(index))
+      .map(cell => boxToJSON(cell))
+
+    val ways = indexedData
+      .flatMap(r => r._2)
+      .distinct
+      .map(w => wayToJSON(w))
+
+    val correctPoints = indexedData
+      .map(r => r._3._1)
+      .map(p => pointToJSON(p,"#13a71a"))
+
+    val matchedPoints = indexedData
+      .map(r => r._3._2)
+      .map(p => pointToJSON(p,"#131aa7"))
+
+    //.map(w => wayToJSON(w))
+
+    writeToFile(pw, points ++ cells ++ ways ++ correctPoints ++ matchedPoints)
+
+  }
+
   def resultsToJSON (pw: PrintWriter, results: List[(Point, Point, List[Way])], grid: Grid): Unit = {
 
     val points = results
       .map(r => orientedPointToJSON(r._1))
 
     val matchedPoints = results
-      .map(r => pointToJSON(r._2))
+      .map(r => pointToJSON(r._2, "#a71313"))
 
     val cells = results
       .map(r => r._1)
