@@ -5,6 +5,23 @@ class Way (val points: List[Point], val osmID: String) extends Serializable{
 
   override def toString: String = "Way@" + osmID
 
+  override def equals(that: Any): Boolean = {
+
+    that match {
+
+      case that: Way => (this.points == that.points) && (this.osmID == that.osmID)
+      case _ => false
+
+    }
+
+  }
+
+  override def hashCode(): Int = {
+
+    osmID.toInt
+
+  }
+
   def toSegmentsList: List[Segment] = {
 
     points
