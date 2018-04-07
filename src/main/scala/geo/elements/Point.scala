@@ -123,10 +123,9 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
   //Orientation computations methods
   def isPointAligned (s: Segment, t: Double): Boolean = {
 
-
     //parameter t is the tolerance in the difference of orientations
 
-    val difference = abs(s.initialBearing-orientation) % 180
+    val difference = orientationDifference(s) % 180
 
     if ((difference <= t ) || (difference >= 180 - t )) true else false
 
@@ -134,7 +133,8 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
 
   def orientationDifference (s: Segment): Double = {
 
-    abs(orientation - s.initialBearing)
+    val difference = abs(orientation - s.initialBearing)
+    min(difference, 360 - difference)
 
   }
 
@@ -168,7 +168,6 @@ class Point (val lat: Double, val lon: Double, val orientation: Double, val id: 
   }
 
   //Point operators
-
   def - (p:Point): (Double, Double) = {
 
     (lat - p.lat, lon - p.lon)

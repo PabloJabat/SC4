@@ -18,7 +18,7 @@ class Segment (val a: Point, val b: Point, val osmID: String) extends Serializab
 
     //parameter t is the tolerance in the difference of orientations
 
-    val difference = abs(p.orientation-initialBearing) % 180
+    val difference = orientationDifference(p) % 180
 
     if ((difference <= t ) || (difference >= 180 - t )) true else false
 
@@ -40,7 +40,7 @@ class Segment (val a: Point, val b: Point, val osmID: String) extends Serializab
     val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(lon2 - lon1)
     val y = sin(lon2 - lon1) * cos(lat2)
 
-    atan2(y,x).toDegrees
+    (atan2(y,x).toDegrees + 360) % 360
 
   }
 
@@ -52,7 +52,8 @@ class Segment (val a: Point, val b: Point, val osmID: String) extends Serializab
 
   def orientationDifference (p: Point): Double = {
 
-    abs(p.orientation - initialBearing)
+    val difference = abs(p.orientation - initialBearing)
+    min(difference, 360 - difference)
 
   }
 
