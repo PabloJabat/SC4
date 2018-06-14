@@ -63,8 +63,9 @@ object Read {
     val osmData = Source.fromFile(mapPath).getLines()
 
     osmData
-      .filter(line => lineHasWay(line))
-      .map(line => lineStringToWay(line))
+      .sliding(2,2)
+      .filter(line => lineHasWay(line.head))
+      .map(line => lineStringToWay2(line.head, line(1)))
       .toList
 
   }
