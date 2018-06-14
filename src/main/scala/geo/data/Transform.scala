@@ -40,11 +40,14 @@ object Transform {
   def pointArrayToSegmentsArray(data: Array[Point]): Array[Segment] = {
 
     val dataZipped = data.zipWithIndex
+
     val dataResult = for ((e, i) <- dataZipped if i != 0)
       yield {
         new Segment(dataZipped(i - 1)._1, e)
       }
+
     dataResult
+
   }
 
   def lineStringToPointStringArray(data: String): Array[String] = {
@@ -73,6 +76,16 @@ object Transform {
   def lineStringToWay(data: String): Way = {
 
     new Way(lineStringToPointArray(data).toList,lineStringFindWayId(data))
+
+  }
+
+  def lineStringToWay2 (data: String, twoWay: String): Way = {
+
+    var twoWayBoolean = false
+
+    if (twoWay contains "True") twoWayBoolean = true
+
+    new Way(lineStringToPointArray(data).toList,lineStringFindWayId(data),twoWayBoolean)
 
   }
 
