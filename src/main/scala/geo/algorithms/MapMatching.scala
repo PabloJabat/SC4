@@ -29,7 +29,13 @@ object MapMatching {
 
   def geometricMM2 (p: Point, waysLst: List[Way], t: Double = 30.0): (Way, Point) = {
 
-    val segmentsLst = waysLst.flatMap(w => w.toSegmentsList)
+    val segmentsLstOneWay = waysLst.filter(w => !w.twoWayStreet).flatMap(w => w.toSegmentsList)
+
+    val segmentsLstTwoWay_1 = waysLst.filter(w => w.twoWayStreet).flatMap(w => w.toSegmentsList)
+
+    val segmentsLstTwoWay_2 = segmentsLstTwoWay_1.map(s => new Segment(s.b,s.a,s.osmID))
+
+    val segmentsLst = segmentsLstOneWay ++ segmentsLstTwoWay_1 ++ segmentsLstTwoWay_2
 
     val (bestSegment, projection) = geometricMM(p,segmentsLst,t)
 
