@@ -1,7 +1,13 @@
 package geo.elements
 
 
-class Way (val points: List[Point], val osmID: String) extends Serializable{
+class Way (val points: List[Point], val osmID: String, val twoWayStreet: Boolean) extends Serializable{
+
+  def this (points: List[Point], osmID: String) = {
+
+    this(points, osmID, false)
+
+  }
 
   override def toString: String = "Way@" + osmID
 
@@ -76,6 +82,12 @@ class Way (val points: List[Point], val osmID: String) extends Serializable{
     val lonDiff = points.map(_.lon).max - points.map(_.lon).min
 
     (latDiff, lonDiff)
+
+  }
+
+  def writeTwoWay(twoWay: Boolean): Way = {
+
+    new Way(points, osmID, twoWay)
 
   }
 
